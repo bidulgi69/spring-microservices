@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ServerWebInputException;
 import se.magnus.util.exceptions.InvalidInputException;
 import se.magnus.util.exceptions.NotFoundException;
 
@@ -34,9 +35,18 @@ class GlobalControllerExceptionHandler {
     }
 
     @ResponseStatus(BAD_REQUEST)
-    @ExceptionHandler(RuntimeException.class)
+    @ExceptionHandler(ServerWebInputException.class)
     public @ResponseBody HttpErrorInfo handleRuntimeException(ServerHttpRequest request, Exception ex) {
-        return createHttpErrorInfo(BAD_REQUEST, request, ex);
+        String message = ex.getMessage();
+        int from = message.indexOf("\"") + 1, to = from;
+        for (int i = from; i < message.length(); i++) {
+            // find next index of double quote
+            if (message.charAt(i) == '\"') {
+                to = i;
+                break;
+            }
+        }
+        return createHttpErrorInfo(BAD_REQUEST, request, new RuntimeException(message.substring(from, to)));
     }
 
     private HttpErrorInfo createHttpErrorInfo(HttpStatus httpStatus, ServerHttpRequest request, Exception ex) {

@@ -39,6 +39,8 @@ public class SwaggerConfig implements WebFluxConfigurer {
                 .paths(PathSelectors.any())
                 .build()
                 .globalResponses(HttpMethod.GET, emptyList())
+                .globalResponses(HttpMethod.POST, emptyList())
+                .globalResponses(HttpMethod.DELETE, emptyList())
                 .apiInfo(new ApiInfo(
                         apiTitle,
                         apiDescription,

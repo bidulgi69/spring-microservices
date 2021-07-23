@@ -39,6 +39,7 @@ class GlobalControllerExceptionHandler {
     public @ResponseBody HttpErrorInfo handleRuntimeException(ServerHttpRequest request, Exception ex) {
         String message = ex.getMessage();
         int from = message.indexOf("\"") + 1, to = from;
+        //  extract error message (surrounded by quotes) from exception obj
         for (int i = from; i < message.length(); i++) {
             // find next index of double quote
             if (message.charAt(i) == '\"') {

@@ -11,10 +11,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import se.magnus.microservices.core.review.persistence.ReviewEntity;
 import se.magnus.microservices.core.review.persistence.ReviewRepository;
+import se.magnus.util.exceptions.NotFoundException;
 
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
@@ -45,7 +45,7 @@ public class PersistenceTests {
         ReviewEntity newEntity = new ReviewEntity(1, 3, "a", "s", "c");
         repository.save(newEntity);
 
-        ReviewEntity foundEntity = repository.findById(newEntity.getId()).get();
+        ReviewEntity foundEntity = repository.findById(newEntity.getId()).orElse(new ReviewEntity());
         assertEqualsReview(newEntity, foundEntity);
 
         assertEquals(2, repository.count());
@@ -56,7 +56,7 @@ public class PersistenceTests {
         savedEntity.setAuthor("a2");
         repository.save(savedEntity);
 
-        ReviewEntity foundEntity = repository.findById(savedEntity.getId()).get();
+        ReviewEntity foundEntity = repository.findById(savedEntity.getId()).orElse(new ReviewEntity());
         assertEquals(1, foundEntity.getVersion());
         assertEquals("a2", foundEntity.getAuthor());
     }
@@ -84,8 +84,8 @@ public class PersistenceTests {
    	public void optimisticLockError() {
 
         // Store the saved entity in two separate entity objects
-        ReviewEntity entity1 = repository.findById(savedEntity.getId()).get();
-        ReviewEntity entity2 = repository.findById(savedEntity.getId()).get();
+        ReviewEntity entity1 = repository.findById(savedEntity.getId()).orElseThrow(NotFoundException::new);
+        ReviewEntity entity2 = repository.findById(savedEntity.getId()).orElseThrow(NotFoundException::new);
 
         // Update the entity using the first entity object
         entity1.setAuthor("a1");
@@ -101,7 +101,7 @@ public class PersistenceTests {
         } catch (OptimisticLockingFailureException ignored) {}
 
         // Get the updated entity from the database and verify its new sate
-        ReviewEntity updatedEntity = repository.findById(savedEntity.getId()).get();
+        ReviewEntity updatedEntity = repository.findById(savedEntity.getId()).orElse(new ReviewEntity());
         assertEquals(1, updatedEntity.getVersion());
         assertEquals("a1", updatedEntity.getAuthor());
     }

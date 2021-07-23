@@ -8,6 +8,7 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 import org.springframework.web.reactive.config.ResourceHandlerRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.spring.web.plugins.Docket;
@@ -35,7 +36,7 @@ public class SwaggerConfig implements WebFluxConfigurer {
     public Docket apiDocumentation() {
         return new Docket(SWAGGER_2)
                 .select()
-                .apis(basePackage("se.magnus.microservices.composite.product"))
+                .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.any())
                 .build()
                 .globalResponses(HttpMethod.GET, emptyList())

@@ -5,17 +5,27 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.http.HttpStatus;
+import org.springframework.integration.channel.AbstractMessageChannel;
+import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 import se.magnus.api.core.recommendation.Recommendation;
+import se.magnus.api.event.Event;
 import se.magnus.microservices.core.recommendation.persistence.RecommendationRepository;
+import se.magnus.util.exceptions.InvalidInputException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static reactor.core.publisher.Mono.just;
+import static se.magnus.api.event.Event.Type.CREATE;
+import static se.magnus.api.event.Event.Type.DELETE;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment=RANDOM_PORT, properties = {"spring.data.mongodb.port: 0"})
@@ -27,10 +37,15 @@ public class RecommendationServiceApplicationTests {
 	@Autowired
 	private RecommendationRepository repository;
 
+	@Autowired
+	private Sink channels;
+
+	private AbstractMessageChannel input = null;
 
 	@Before
 	public void setupDb() {
-		repository.deleteAll();
+		input = (AbstractMessageChannel) channels.input();
+		repository.deleteAll().block();
 	}
 
 	@Test
@@ -38,11 +53,11 @@ public class RecommendationServiceApplicationTests {
 
 		int productId = 1;
 
-		postAndVerifyRecommendation(productId, 1, OK);
-		postAndVerifyRecommendation(productId, 2, OK);
-		postAndVerifyRecommendation(productId, 3, OK);
+		sendCreateRecommendationEvent(productId, 1);
+		sendCreateRecommendationEvent(productId, 2);
+		sendCreateRecommendationEvent(productId, 3);
 
-		assertEquals(3, repository.findByProductId(productId).size());
+		assertEquals(Mono.just(3L).block(), repository.findByProductId(productId).count().block());
 
 		getAndVerifyRecommendationsByProductId(productId, OK)
 			.jsonPath("$.length()").isEqualTo(3)
@@ -56,17 +71,21 @@ public class RecommendationServiceApplicationTests {
 		int productId = 1;
 		int recommendationId = 1;
 
-		postAndVerifyRecommendation(productId, recommendationId, OK)
-			.jsonPath("$.productId").isEqualTo(productId)
-			.jsonPath("$.recommendationId").isEqualTo(recommendationId);
+		sendCreateRecommendationEvent(productId, recommendationId);
+		assertEquals(Mono.just(1L).block(), repository.count().block());
+		try {
+			sendCreateRecommendationEvent(productId, recommendationId);
+			fail("Expected a MessagingException here!");
+		} catch (MessagingException me) {
+			if (me.getCause() instanceof InvalidInputException)	{
+				InvalidInputException iie = (InvalidInputException) me.getCause();
+				assertEquals(String.format("Duplicate key, Product Id: %d, Recommendation Id:%d", productId, recommendationId), iie.getMessage());
+			} else {
+				fail("Expected a InvalidInputException as the root cause!");
+			}
+		}
 
-		assertEquals(1, repository.count());
-
-		postAndVerifyRecommendation(productId, recommendationId, UNPROCESSABLE_ENTITY)
-			.jsonPath("$.path").isEqualTo("/recommendation")
-			.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: 1, Recommendation Id:1");
-
-		assertEquals(1, repository.count());
+		assertEquals(Mono.just(1L).block(), repository.count().block());
 	}
 
 	@Test
@@ -75,13 +94,13 @@ public class RecommendationServiceApplicationTests {
 		int productId = 1;
 		int recommendationId = 1;
 
-		postAndVerifyRecommendation(productId, recommendationId, OK);
-		assertEquals(1, repository.findByProductId(productId).size());
+		sendCreateRecommendationEvent(productId, recommendationId);
+		assertEquals(Mono.just(1L).block(), repository.findByProductId(productId).count().block());
 
-		deleteAndVerifyRecommendationsByProductId(productId, OK);
-		assertEquals(0, repository.findByProductId(productId).size());
+		sendDeleteRecommendationEvent(productId);
+		assertEquals(Mono.just(0L).block(), repository.findByProductId(productId).count().block());
 
-		deleteAndVerifyRecommendationsByProductId(productId, OK);
+		sendDeleteRecommendationEvent(productId);
 	}
 
 	@Test
@@ -152,4 +171,14 @@ public class RecommendationServiceApplicationTests {
 			.expectBody();
 	}
 
+	private void sendCreateRecommendationEvent(int productId, int recommendationId) {
+		Recommendation recommendation = new Recommendation(productId, recommendationId, "Author " + recommendationId, recommendationId, "Content " + recommendationId, "SA");
+		Event<Integer, Recommendation> event = new Event<>(CREATE, productId, recommendation);
+		input.send(new GenericMessage<>(event));
+	}
+
+	private void sendDeleteRecommendationEvent(int productId) {
+		Event<Integer, Recommendation> event = new Event<>(DELETE, productId, null);
+		input.send(new GenericMessage<>(event));
+	}
 }

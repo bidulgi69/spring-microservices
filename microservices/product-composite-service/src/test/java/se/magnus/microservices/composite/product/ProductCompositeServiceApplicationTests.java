@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import se.magnus.api.core.product.Product;
 import se.magnus.api.core.recommendation.Recommendation;
 import se.magnus.api.core.review.Review;
@@ -39,11 +41,11 @@ public class ProductCompositeServiceApplicationTests {
 	public void setUp() {
 		// integration.getProduct 함수가 호출됐을 경우 return 값 미리 세팅 (Mock-up)
 		when(compositeIntegration.getProduct(PRODUCT_ID_OK)).
-				thenReturn(new Product(PRODUCT_ID_OK, "name", 1, "mock-address"));
+				thenReturn(Mono.just(new Product(PRODUCT_ID_OK, "name", 1, "mock-address")));
 		when(compositeIntegration.getRecommendations(PRODUCT_ID_OK)).
-				thenReturn(singletonList(new Recommendation(PRODUCT_ID_OK, 1, "author", 1, "content", "mock address")));
+				thenReturn(Flux.fromIterable(singletonList(new Recommendation(PRODUCT_ID_OK, 1, "author", 1, "content", "mock address"))));
 		when(compositeIntegration.getReviews(PRODUCT_ID_OK)).
-				thenReturn(singletonList(new Review(PRODUCT_ID_OK, 1, "author", "subject", "content", "mock address")));
+				thenReturn(Flux.fromIterable(singletonList(new Review(PRODUCT_ID_OK, 1, "author", "subject", "content", "mock address"))));
 		// error causer
 		when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND)).thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
 		when(compositeIntegration.getProduct(PRODUCT_ID_INVALID)).thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));

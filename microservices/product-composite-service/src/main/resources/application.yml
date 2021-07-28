@@ -53,10 +53,12 @@ server.error.include-message: always
 
 spring.application.name: product-composite
 
+app.eureka-server: localhost
+
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://${app.eureka-server}:8761/eureka/
     initialInstanceInfoReplicationIntervalSeconds: 5
     registryFetchIntervalSeconds: 5
   instance:
@@ -64,6 +66,7 @@ eureka:
     leaseExpirationDurationInSeconds: 5
 
 ribbon.ServerListRefreshInterval: 5000
+
 ribbon.NFLoadBalancerPingInterval: 5
 
 spring.cloud.stream:
@@ -100,20 +103,13 @@ logging:
 
 management.endpoint.health.show-details: "ALWAYS"
 management.endpoints.web.exposure.include: "*"
-
-#spring:
-#  cloud:
-#    loadbalancer:
-#      ribbon:
-#        enabled: false
-
 ---
 spring.profiles: docker
 
 server.port: 8080
 
-eureka.client.serviceUrl.defaultZone: http://eureka:8761/eureka/
-
 spring.rabbitmq.host: rabbitmq
 
 spring.cloud.stream.kafka.binder.brokers: kafka
+
+app.eureka-server: eureka

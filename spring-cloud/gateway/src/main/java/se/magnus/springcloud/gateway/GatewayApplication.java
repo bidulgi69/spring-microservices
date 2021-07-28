@@ -1,15 +1,14 @@
-package se.magnus.microservices.composite.product;
+package se.magnus.springcloud.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootApplication
-@ComponentScan("se.magnus")
-public class ProductCompositeServiceApplication {
+public class GatewayApplication {
+
 	@Bean
 	@LoadBalanced
 	WebClient.Builder builder() {
@@ -17,6 +16,7 @@ public class ProductCompositeServiceApplication {
 	}
 
 	public static void main(String[] args) {
-		SpringApplication.run(ProductCompositeServiceApplication.class, args);
+		SpringApplication.run(GatewayApplication.class, args);
 	}
+
 }

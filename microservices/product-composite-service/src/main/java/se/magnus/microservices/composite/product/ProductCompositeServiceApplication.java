@@ -6,8 +6,11 @@ import org.springframework.boot.actuate.health.CompositeReactiveHealthContributo
 import org.springframework.boot.actuate.health.ReactiveHealthContributor;
 import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.web.reactive.function.client.WebClient;
 import se.magnus.microservices.composite.product.services.ProductCompositeIntegration;
 
 import java.util.LinkedHashMap;
@@ -17,7 +20,7 @@ import java.util.Map;
 @ComponentScan("se.magnus")
 public class ProductCompositeServiceApplication {
 	@Autowired
-	public ProductCompositeServiceApplication(ProductCompositeIntegration integration) {
+	public ProductCompositeServiceApplication(@Lazy ProductCompositeIntegration integration) {
 		this.integration = integration;
 	}
 	private final ProductCompositeIntegration integration;
@@ -29,6 +32,12 @@ public class ProductCompositeServiceApplication {
 		registry.put("recommendation", integration::getRecommendationHealth);
 		registry.put("review", integration::getReviewHealth);
 		return CompositeReactiveHealthContributor.fromMap(registry);
+	}
+
+	@Bean
+	@LoadBalanced
+	WebClient.Builder builder() {
+		return WebClient.builder();
 	}
 
 	public static void main(String[] args) {

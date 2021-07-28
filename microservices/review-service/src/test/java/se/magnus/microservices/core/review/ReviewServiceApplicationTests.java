@@ -19,7 +19,7 @@ import static reactor.core.publisher.Mono.just;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment=RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:review-db"})
+    "spring.datasource.url=jdbc:h2:mem:review-db", "eureka.client.enabled=false"})
 
 public class ReviewServiceApplicationTests {
 

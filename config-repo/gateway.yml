@@ -1,0 +1,26 @@
+server.port: 8443
+
+#server.ssl:
+#  key-store-type: PKCS12
+#  key-store: classpath:keystore/edge.p12
+#  key-store-password: password
+#  key-alias: localhost
+
+app.config-server: localhost
+
+ribbon.ServerListRefreshInterval: 5000
+ribbon.NFLoadBalancerPingInterval: 5
+
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri: http://${app.auth-server}:9999/.well-known/jwks.json
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: INFO
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: TRACE
+
+---
+spring.profiles: docker
+
+app.config-server: config-server

@@ -12,7 +12,6 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.NonNull;
-import reactor.util.annotation.NonNullApi;
 
 @Component
 public class JwtTokenAuthenticationFilter implements WebFilter {

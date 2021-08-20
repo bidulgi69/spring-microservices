@@ -42,16 +42,17 @@ public class ProductCompositeServiceApplicationTests {
 
 	@Before
 	public void setUp() {
+		final int delay = 0, faultPercent = 0;
 		// integration.getProduct 함수가 호출됐을 경우 return 값 미리 세팅 (Mock-up)
-		when(compositeIntegration.getProduct(PRODUCT_ID_OK)).
+		when(compositeIntegration.getProduct(PRODUCT_ID_OK, delay, faultPercent)).
 				thenReturn(Mono.just(new Product(PRODUCT_ID_OK, "name", 1, "mock-address")));
 		when(compositeIntegration.getRecommendations(PRODUCT_ID_OK)).
 				thenReturn(Flux.fromIterable(singletonList(new Recommendation(PRODUCT_ID_OK, 1, "author", 1, "content", "mock address"))));
 		when(compositeIntegration.getReviews(PRODUCT_ID_OK)).
 				thenReturn(Flux.fromIterable(singletonList(new Review(PRODUCT_ID_OK, 1, "author", "subject", "content", "mock address"))));
 		// error causer
-		when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND)).thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
-		when(compositeIntegration.getProduct(PRODUCT_ID_INVALID)).thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));
+		when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND, delay, faultPercent)).thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
+		when(compositeIntegration.getProduct(PRODUCT_ID_INVALID, delay, faultPercent)).thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));
 	}
 
 	@Test
